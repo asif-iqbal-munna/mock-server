@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import routes from "./routes";
 import { errorHandler } from "./middleware";
 import { connectDatabase } from "./config/db";
+import dayjs from "dayjs";
 
 // Load environment variables
 dotenv.config();
@@ -40,7 +41,9 @@ app.use("/api/", limiter);
 // Request Logging Middleware (Development)
 if (process.env.NODE_ENV !== "production") {
   app.use((req, _res, next) => {
-    console.log(`${req.method} ${req.path} - ${new Date().toISOString()}`);
+    console.log(
+      `${req.method} ${req.path} - ${dayjs(new Date()).format("DD MMM YYYY HH:mm:ss")}`
+    );
     next();
   });
 }

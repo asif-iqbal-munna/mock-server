@@ -7,7 +7,7 @@ export const getAllPosts = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { page = "1", limit = "10" } = req.query;
+    const { page = "1", limit = "9" } = req.query;
     const skip = (Number(page) - 1) * Number(limit);
 
     const [posts, total] = await Promise.all([
@@ -22,7 +22,7 @@ export const getAllPosts = async (
     ]);
 
     res.json({
-      posts,
+      data: posts,
       pagination: {
         page: Number(page),
         limit: Number(limit),
