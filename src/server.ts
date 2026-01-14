@@ -6,6 +6,7 @@ import routes from "./routes";
 import { errorHandler } from "./middleware";
 import { connectDatabase } from "./config/db";
 import dayjs from "dayjs";
+import compression from "compression";
 
 // Load environment variables
 dotenv.config();
@@ -26,6 +27,8 @@ app.use(
 // Body Parser
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+
+app.use(compression());
 
 // Rate Limiting
 const limiter = rateLimit({

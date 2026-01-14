@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { Product } from "../models";
 import { ProductSearchQuery } from "../types";
+import { redis } from "../config/redis";
 
 export const searchProducts = async (
   req: Request<{}, {}, {}, ProductSearchQuery>,
@@ -14,6 +15,7 @@ export const searchProducts = async (
       category,
       minPrice,
       maxPrice,
+      fetchAll = true,
     } = req.query;
 
     const query: any = {};
@@ -33,21 +35,41 @@ export const searchProducts = async (
     }
 
     const skip = (Number(page) - 1) * Number(limit);
+    if (fetchAll) {
+      const CACHE_KEY = "all_products_cache";
+      const cachedData = await redis.get(CACHE_KEY);
+      if (cachedData) {
+        const responseData = JSON.parse(cachedData);
+        res.setHeader("Content-Type", "application/json");
+        responseData.cached = true;
+        res.json(responseData);
+      } else {
+        const products = await Product.find({})
+          .select("name category price _id")
+          .lean();
 
-    const [products, total] = await Promise.all([
-      Product.find(query).skip(skip).limit(Number(limit)).lean(),
-      Product.countDocuments(query),
-    ]);
+        const responseData = { data: products, total: products.length };
 
-    res.json({
-      products,
-      pagination: {
-        page: Number(page),
-        limit: Number(limit),
-        total,
-        pages: Math.ceil(total / Number(limit)),
-      },
-    });
+        await redis.set(CACHE_KEY, JSON.stringify(responseData), "EX", 3600);
+
+        res.json(responseData);
+      }
+    } else {
+      const [products, total] = await Promise.all([
+        Product.find(query).skip(skip).limit(Number(limit)).lean(),
+        Product.countDocuments(query),
+      ]);
+
+      res.json({
+        data: products,
+        pagination: {
+          page: Number(page),
+          limit: Number(limit),
+          total,
+          pages: Math.ceil(total / Number(limit)),
+        },
+      });
+    }
   } catch (error) {
     res.status(500).json({ error: (error as Error).message });
   }

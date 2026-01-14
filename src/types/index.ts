@@ -74,4 +74,5 @@ export interface ProductSearchQuery extends PaginationQuery {
   category?: string;
   minPrice?: string;
   maxPrice?: string;
+  fetchAll?: boolean;
 }
